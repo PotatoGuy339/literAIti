@@ -41,10 +41,10 @@ pip install -r requirements.txt
 ```json
 {
   "openai": {
-    "api_key": "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"
+    "api_key": "OPENAI KEY"
   },
   "tinyfish": {
-    "api_key": "sk-tinyfish--tTqjOK8uhD99Z7yAvIzy2NFfZoGTPsp"
+    "api_key": "TINYFISH KEY"
   }
 }
 ```
