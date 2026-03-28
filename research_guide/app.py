@@ -47,6 +47,7 @@ def process_query():
         return jsonify({"error": "Missing session_id or query"}), 400
     
     result = orchestrator.full_session_flow(session_id, user_query, user_background)
+    print(f"[DEBUG] API returning: {result}")
     return jsonify(result)
 
 
@@ -56,10 +57,13 @@ def chat():
     session_id = data.get('session_id')
     message = data.get('message')
     
+    print(f"[DEBUG] /api/chat called with session_id={session_id}, message={message[:50]}...")
+    
     if not session_id or not message:
         return jsonify({"error": "Missing session_id or message"}), 400
     
     response = orchestrator.answer_query(session_id, message)
+    print(f"[DEBUG] answer_query returned: {response[:100] if isinstance(response, str) else response}...")
     return jsonify({"response": response})
 
 
@@ -82,6 +86,20 @@ def get_context(session_id):
     session = orchestrator.get_session(session_id)
     if not session:
         return jsonify({"error": "Session not found"}), 404
+    
+    return jsonify({
+        "field_context": session.field_context.to_dict() if session.field_context else None,
+        "user_context": session.user_context.to_dict() if session.user_context else None
+    })
+
+
+@app.route('/api/refresh-context/<session_id>', methods=['POST'])
+def refresh_context(session_id):
+    session = orchestrator.get_session(session_id)
+    if not session:
+        return jsonify({"error": "Session not found"}), 404
+    
+    orchestrator._refine_contexts_from_conversation(session_id)
     
     return jsonify({
         "field_context": session.field_context.to_dict() if session.field_context else None,
