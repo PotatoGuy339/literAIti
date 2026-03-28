@@ -368,6 +368,14 @@
                 <div class="context-panel">
                     <h3><span class="status-indicator inactive" id="userStatus"></span>Your Profile</h3>
                     <div class="context-section user-context">
+                        <h4>Background</h4>
+                        <div class="context-content" id="userBackground">Not specified</div>
+                    </div>
+                    <div class="context-section user-context">
+                        <h4>Expertise Areas</h4>
+                        <div class="context-content" id="expertiseAreas">Not specified</div>
+                    </div>
+                    <div class="context-section user-context">
                         <h4>Current Focus</h4>
                         <div class="context-content" id="currentFocus">Exploring options</div>
                     </div>
@@ -404,7 +412,9 @@
             
             try {
                 const sessionRes = await fetch('/api/session', { method: 'POST' });
+                console.log('Session response:', sessionRes);
                 const sessionData = await sessionRes.json();
+                console.log('Session data:', sessionData);
                 sessionId = sessionData.session_id;
                 
                 const queryRes = await fetch('/api/query', {
@@ -416,29 +426,51 @@
                         background: background
                     })
                 });
+                console.log('Query response:', queryRes);
                 
                 const result = await queryRes.json();
+                console.log('Query result:', result);
                 
                 if (result.error) {
                     alert('Error: ' + result.error);
+                    resetSetupForm();
                     return;
                 }
                 
-                document.getElementById('setupForm').classList.add('hidden');
-                document.getElementById('chatInterface').classList.remove('hidden');
-                
-                updateContextPanels(result);
-                
-                addMessage('assistant', 'Welcome! I\'ve analyzed your research interests and gathered context about the field. Feel free to ask me questions about potential research directions, specific topics, or how your background might apply to different areas.');
+                try {
+                    const setupForm = document.getElementById('setupForm');
+                    const chatInterface = document.getElementById('chatInterface');
+                    console.log('setupForm:', setupForm);
+                    console.log('chatInterface:', chatInterface);
+                    
+                    if (setupForm) setupForm.classList.add('hidden');
+                    if (chatInterface) chatInterface.classList.remove('hidden');
+                    
+                    updateContextPanels(result);
+                    
+                    const welcomeMessage = result.clarification_needed 
+                        ? result.message
+                        : "Welcome! I've analyzed your research interests and gathered context about the field. Feel free to ask me questions about potential research directions, specific topics, or how your background might apply to different areas.";
+                    
+                    addMessage('assistant', welcomeMessage);
+                } catch (uiError) {
+                    console.error('UI update error:', uiError);
+                    alert('Session started but UI update failed: ' + uiError.message);
+                }
                 
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to start session. Please try again.');
+                alert('Failed to start session. Please try again. Check console for details.');
             } finally {
                 isProcessing = false;
-                btn.disabled = false;
-                btn.innerHTML = 'Explore Research Directions';
+                resetSetupForm();
             }
+        }
+        
+        function resetSetupForm() {
+            const btn = document.getElementById('startBtn');
+            btn.disabled = false;
+            btn.innerHTML = '<span class="status-indicator inactive" id="statusIndicator"></span> Explore Research Directions';
         }
         
         async function sendMessage() {
@@ -493,45 +525,87 @@
         }
         
         function updateContextPanels(result) {
+            console.log('updateContextPanels called with:', result);
+            
             if (result.field_context) {
                 const fc = result.field_context;
+                console.log('field_context:', fc);
+                console.log('major_areas:', fc.major_areas);
+                console.log('debate_criticisms:', fc.debate_criticisms);
                 
-                document.getElementById('fieldStatus').classList.add('active');
-                document.getElementById('fieldStatus').classList.remove('inactive');
-                document.getElementById('statusIndicator').classList.add('active');
-                document.getElementById('statusIndicator').classList.remove('inactive');
+                const fieldStatus = document.getElementById('fieldStatus');
+                const statusIndicator = document.getElementById('statusIndicator');
+                const majorAreas = document.getElementById('majorAreas');
+                const debates = document.getElementById('debates');
                 
-                if (fc.major_areas && fc.major_areas.length > 0) {
-                    document.getElementById('majorAreas').innerHTML = fc.major_areas.map(a => `• ${a}`).join('<br>');
+                console.log('majorAreas element:', majorAreas);
+                
+                if (fieldStatus) fieldStatus.classList.add('active');
+                if (fieldStatus) fieldStatus.classList.remove('inactive');
+                if (statusIndicator) statusIndicator.classList.add('active');
+                if (statusIndicator) statusIndicator.classList.remove('inactive');
+                
+                if (majorAreas && fc.major_areas && fc.major_areas.length > 0) {
+                    console.log('Setting majorAreas content');
+                    majorAreas.innerHTML = fc.major_areas.map(a => `• ${a}`).join('<br>');
+                    console.log('majorAreas innerHTML now:', majorAreas.innerHTML);
                 }
                 
-                if (fc.debate_criticisms && fc.debate_criticisms.length > 0) {
-                    document.getElementById('debates').innerHTML = fc.debate_criticisms.map(d => `• ${d}`).join('<br>');
+                if (debates && fc.debate_criticisms && fc.debate_criticisms.length > 0) {
+                    console.log('Setting debates content');
+                    debates.innerHTML = fc.debate_criticisms.map(d => `• ${d}`).join('<br>');
                 }
+            } else {
+                console.log('No field_context in result');
             }
             
             if (result.user_context) {
                 const uc = result.user_context;
+                console.log('user_context:', uc);
                 
-                document.getElementById('userStatus').classList.add('active');
-                document.getElementById('userStatus').classList.remove('inactive');
+                const userStatus = document.getElementById('userStatus');
+                const userBackground = document.getElementById('userBackground');
+                const expertiseAreas = document.getElementById('expertiseAreas');
+                const currentFocus = document.getElementById('currentFocus');
+                const suggestions = document.getElementById('suggestions');
                 
-                if (uc.current_focus) {
-                    document.getElementById('currentFocus').textContent = uc.current_focus;
+                if (userStatus) {
+                    userStatus.classList.add('active');
+                    userStatus.classList.remove('inactive');
                 }
                 
-                if (uc.suggested_directions && uc.suggested_directions.length > 0) {
-                    const suggestionsHtml = uc.suggested_directions.map((s, i) => `
+                if (userBackground) {
+                    userBackground.textContent = uc.background || "Not specified";
+                }
+                
+                if (expertiseAreas) {
+                    if (uc.expertise_areas && uc.expertise_areas.length > 0) {
+                        expertiseAreas.innerHTML = uc.expertise_areas.map(a => `• ${a}`).join('<br>');
+                    } else {
+                        expertiseAreas.textContent = "Exploring new areas";
+                    }
+                }
+                
+                if (currentFocus) {
+                    currentFocus.textContent = uc.current_focus || "Exploring options";
+                }
+                
+                if (suggestions && uc.suggested_directions && uc.suggested_directions.length > 0) {
+                    const suggestionsHtml = uc.suggested_directions.map((s, i) => {
+                        const safeS = String(s).replace(/'/g, "\\'").replace(/"/g, '\\"');
+                        return `
                         <div class="suggestion-item">
-                            <div>${s}</div>
+                            <div>${String(s).replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
                             <div class="feedback-buttons">
-                                <button class="btn-like" onclick="sendFeedback('${s}', true)">This is interesting</button>
-                                <button class="btn-dislike" onclick="sendFeedback('${s}', false)">Not for me</button>
+                                <button class="btn-like" data-direction="${safeS}" onclick="handleFeedback(this, true)">This is interesting</button>
+                                <button class="btn-dislike" data-direction="${safeS}" onclick="handleFeedback(this, false)">Not for me</button>
                             </div>
                         </div>
-                    `).join('');
-                    document.getElementById('suggestions').innerHTML = suggestionsHtml;
+                    `}).join('');
+                    suggestions.innerHTML = suggestionsHtml;
                 }
+            } else {
+                console.log('No user_context in result');
             }
         }
         
@@ -554,6 +628,11 @@
             } catch (error) {
                 console.error('Error sending feedback:', error);
             }
+        }
+        
+        function handleFeedback(button, isPositive) {
+            const direction = button.getAttribute('data-direction');
+            sendFeedback(direction, isPositive);
         }
         
         function addMessage(role, content) {
