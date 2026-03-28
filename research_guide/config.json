@@ -1,12 +1,12 @@
 {
   "openai": {
-    "api_key": "",
-    "model": "gpt-4",
+    "api_key": "ADD OPENAI KEY",
+    "model": "gpt-4o",
     "temperature": 0.7,
     "max_tokens": 2000
   },
   "tinyfish": {
-    "api_key": "",
+    "api_key": "ADD TINYFISH KEY",
     "base_url": "https://api.tinyfish.ai/v1",
     "max_results": 20,
     "timeout": 30

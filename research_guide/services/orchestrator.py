@@ -20,14 +20,17 @@ class ResearchOrchestrator:
         return self.sessions.get(session_id)
 
     def process_initial_query(self, session_id: str, user_query: str) -> Dict[str, Any]:
+        print(f"[DEBUG] process_initial_query called with query: '{user_query[:50]}...'")
         session = self.get_session(session_id)
         if not session:
             return {"error": "Session not found"}
         
         breakdown = self.openai.breakdown_prompt(user_query)
+        print(f"[DEBUG] breakdown result: field='{breakdown.field_context}', request='{breakdown.user_request[:50] if breakdown.user_request else ''}...'")
         session.breakdown = breakdown
         
         if breakdown.needs_more_info():
+            print(f"[DEBUG] breakdown needs more info: {breakdown.missing_info}")
             return {
                 "needs_more_info": True,
                 "missing_info": breakdown.missing_info,
@@ -54,7 +57,7 @@ class ResearchOrchestrator:
         
         queries = self.openai.generate_search_queries(
             session.field_context.field_name,
-            session.user_context
+            session.user_context or None
         )
         session.field_context.search_queries = queries
         
@@ -91,11 +94,19 @@ class ResearchOrchestrator:
 
     def answer_query(self, session_id: str, user_query: str) -> str:
         session = self.get_session(session_id)
+        print(f"[DEBUG] answer_query: session={session is not None}")
         if not session:
             raise ValueError("Session not found")
         
+        print(f"[DEBUG] answer_query: field_context={session.field_context is not None}, user_context={session.user_context is not None}")
+        
         if not session.field_context or not session.user_context:
             return "Please complete the context gathering phase first."
+        
+        print(f"[DEBUG] answer_query: major_areas={session.field_context.major_areas}, summary={session.field_context.summary}")
+        
+        if not session.field_context.major_areas and not session.field_context.summary:
+            return "Context is empty. Please ensure context gathering completed successfully."
         
         conversation = session.messages[-10:] if session.messages else None
         
@@ -113,8 +124,8 @@ class ResearchOrchestrator:
 
     def process_feedback(self, session_id: str, feedback: str, is_positive: bool) -> Dict[str, Any]:
         session = self.get_session(session_id)
-        if not session:
-            return {"error": "Session not found"}
+        if not session or not session.user_context:
+            return {"error": "Session or user context not found"}
         
         session.user_context.update_from_feedback(feedback, is_positive)
         
@@ -124,25 +135,79 @@ class ResearchOrchestrator:
         }
 
     def full_session_flow(self, session_id: str, user_query: str, user_background: str = "") -> Dict[str, Any]:
-        result = self.process_initial_query(session_id, user_query)
+        print(f"[DEBUG] full_session_flow called with session_id={session_id}")
+        session = self.get_session(session_id)
+        if not session:
+            return {"error": "Session not found"}
         
-        if result.get("needs_more_info"):
-            return result
+        result = self.process_initial_query(session_id, user_query)
+        print(f"[DEBUG] process_initial_query result: {result}")
         
         if user_background:
-            session = self.get_session(session_id)
             session.breakdown.user_context = user_background
             session.user_context = UserContext()
             session.user_context.background = user_background
         
-        self.gather_field_data(session_id)
-        field_context = self.generate_field_context(session_id)
-        user_context = self.generate_user_model(session_id)
+        missing_info = result.get("missing_info", [])
+        has_field_context = session.field_context and bool(session.field_context.field_name)
         
-        session = self.get_session(session_id)
-        return {
-            "breakdown": session.breakdown.to_dict(),
-            "field_context": field_context.to_dict(),
-            "user_context": user_context.to_dict(),
-            "ready_for_queries": True
-        }
+        if not has_field_context:
+            session.field_context = FieldContext("General Research")
+            if missing_info:
+                session.breakdown.missing_info = missing_info
+        
+        if session.field_context:
+            print(f"[DEBUG] Session field_context field_name: '{session.field_context.field_name}'")
+        
+        try:
+            field_data_result = self.gather_field_data(session_id)
+            print(f"[DEBUG] gather_field_data result: {field_data_result}")
+            
+            if field_data_result.get("error"):
+                return field_data_result
+            
+            field_context = self.generate_field_context(session_id)
+            print(f"[DEBUG] field_context generated: major_areas={len(field_context.major_areas) if field_context.major_areas else 0}")
+            session.field_context = field_context
+            user_context = self.generate_user_model(session_id)
+            session.user_context = user_context
+            
+            response_data = {
+                "breakdown": session.breakdown.to_dict(),
+                "field_context": field_context.to_dict(),
+                "user_context": user_context.to_dict(),
+                "ready_for_queries": True
+            }
+            
+            print(f"[DEBUG] Returning field_context major_areas: {response_data['field_context']['major_areas']}")
+            print(f"[DEBUG] Returning field_context debates: {response_data['field_context']['debate_criticisms']}")
+            print(f"[DEBUG] Returning field_context summary: {response_data['field_context']['summary']}")
+            
+            has_meaningful_data = (
+                len(field_context.major_areas) > 0 or 
+                len(field_context.debate_criticisms) > 0 or 
+                field_context.summary
+            )
+            field_is_generic = session.field_context.field_name in ["General Research", ""] if session.field_context else True
+            
+            summary_parts = []
+            if field_context.major_areas:
+                summary_parts.append(f"I've identified {len(field_context.major_areas)} major research areas: {', '.join(field_context.major_areas[:3])}")
+            if field_context.debate_criticisms:
+                summary_parts.append(f"There are {len(field_context.debate_criticisms)} key debates worth exploring.")
+            if field_context.summary:
+                summary_parts.append(field_context.summary[:200] + "..." if len(field_context.summary) > 200 else field_context.summary)
+            
+            welcome_message = "Welcome! Here's what I found:\n\n" + "\n".join(f"• {p}" for p in summary_parts) + "\n\nFeel free to ask me about these areas, explore specific topics, or tell me more about your background so I can refine my suggestions."
+            
+            if missing_info and (not has_meaningful_data or field_is_generic):
+                response_data["clarification_needed"] = missing_info
+                welcome_message += "\n\n💡 P.S. To give you more tailored advice, could you share: " + "; ".join(missing_info[:2]) + "?"
+            
+            response_data["message"] = welcome_message
+            
+            return response_data
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return {"error": f"Context generation failed: {str(e)}"}

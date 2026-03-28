@@ -47,6 +47,7 @@ def process_query():
         return jsonify({"error": "Missing session_id or query"}), 400
     
     result = orchestrator.full_session_flow(session_id, user_query, user_background)
+    print(f"[DEBUG] API returning: {result}")
     return jsonify(result)
 
 
@@ -56,10 +57,13 @@ def chat():
     session_id = data.get('session_id')
     message = data.get('message')
     
+    print(f"[DEBUG] /api/chat called with session_id={session_id}, message={message[:50]}...")
+    
     if not session_id or not message:
         return jsonify({"error": "Missing session_id or message"}), 400
     
     response = orchestrator.answer_query(session_id, message)
+    print(f"[DEBUG] answer_query returned: {response[:100] if isinstance(response, str) else response}...")
     return jsonify({"response": response})
 
 
