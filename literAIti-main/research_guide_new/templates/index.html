@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research Guide - Clarify Your Research Direction</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 1.1rem;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .chat-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-messages {
+            flex: 1;
+            min-height: 400px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .message.user {
+            background: rgba(66, 135, 245, 0.2);
+            border-left: 3px solid #4287f5;
+        }
+
+        .message.assistant {
+            background: rgba(46, 204, 113, 0.2);
+            border-left: 3px solid #2ecc71;
+        }
+
+        .message .role {
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .message .content {
+            line-height: 1.6;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input textarea {
+            flex: 1;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-size: 1rem;
+            resize: none;
+        }
+
+        .chat-input textarea:focus {
+            outline: none;
+            border-color: #4287f5;
+        }
+
+        .chat-input button {
+            padding: 15px 30px;
+            background: #4287f5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s;
+        }
+
+        .chat-input button:hover {
+            background: #3273dc;
+        }
+
+        .chat-input button:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .context-panel {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .context-panel h3 {
+            color: #fff;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .context-section {
+            margin-bottom: 20px;
+        }
+
+        .context-section h4 {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .context-content {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .field-context .context-content {
+            border-left: 3px solid #9b59b6;
+        }
+
+        .user-context .context-content {
+            border-left: 3px solid #e74c3c;
+        }
+
+        .suggestions {
+            margin-top: 10px;
+        }
+
+        .suggestion-item {
+            background: rgba(46, 204, 113, 0.1);
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .suggestion-item:hover {
+            background: rgba(46, 204, 113, 0.2);
+        }
+
+        .suggestion-item .feedback-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .suggestion-item button {
+            padding: 5px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .btn-like {
+            background: rgba(46, 204, 113, 0.3);
+            color: #2ecc71;
+        }
+
+        .btn-dislike {
+            background: rgba(231, 76, 60, 0.3);
+            color: #e74c3c;
+        }
+
+        .setup-form {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 30px;
+        }
+
+        .setup-form h2 {
+            color: #fff;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #aaa;
+        }
+
+        .form-group textarea,
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        .form-group textarea:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: #4287f5;
+        }
+
+        .setup-form button {
+            width: 100%;
+            padding: 15px;
+            background: #4287f5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: background 0.3s;
+        }
+
+        .setup-form button:hover {
+            background: #3273dc;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-indicator.active {
+            background: #2ecc71;
+        }
+
+        .status-indicator.inactive {
+            background: #e74c3c;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #4287f5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Research Guide</h1>
+            <p class="subtitle">Clarify your research direction with AI-powered insights</p>
+        </header>
+
+        <div class="main-layout">
+            <div class="chat-section">
+                <div id="setupForm" class="setup-form">
+                    <h2>Start Your Research Journey</h2>
+                    <div class="form-group">
+                        <label for="background">Your Background (optional)</label>
+                        <textarea id="background" rows="3" placeholder="e.g., I'm a physicist transitioning to machine learning. I have experience in quantum computing but limited CS knowledge..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="initialQuery">What would you like to explore?</label>
+                        <textarea id="initialQuery" rows="3" placeholder="e.g., I'm interested in applying my physics background to AI research, particularly in neural network optimization..."></textarea>
+                    </div>
+                    <button id="startBtn" onclick="startSession()">
+                        <span class="status-indicator inactive" id="statusIndicator"></span>
+                        Explore Research Directions
+                    </button>
+                </div>
+
+                <div id="chatInterface" class="hidden">
+                    <div class="chat-messages" id="chatMessages"></div>
+                    <div class="chat-input">
+                        <textarea id="userInput" rows="2" placeholder="Ask follow-up questions about your research direction..."></textarea>
+                        <button id="sendBtn" onclick="sendMessage()">Send</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="context-panel">
+                    <h3><span class="status-indicator inactive" id="fieldStatus"></span>Field Context</h3>
+                    <div class="context-section field-context">
+                        <h4>Major Areas</h4>
+                        <div class="context-content" id="majorAreas">Not yet loaded</div>
+                    </div>
+                    <div class="context-section field-context">
+                        <h4>Debates & Criticisms</h4>
+                        <div class="context-content" id="debates">Not yet loaded</div>
+                    </div>
+                    <div class="context-section field-context">
+                        <h4>Sources</h4>
+                        <div class="context-content" id="sourcesList">Not yet loaded</div>
+                    </div>
+                </div>
+
+                <div class="context-panel">
+                    <h3><span class="status-indicator inactive" id="userStatus"></span>Your Profile</h3>
+                    <div class="context-section user-context">
+                        <h4>Current Focus</h4>
+                        <div class="context-content" id="currentFocus">Exploring options</div>
+                    </div>
+                    <div class="context-section user-context">
+                        <h4>Suggested Directions</h4>
+                        <div class="suggestions" id="suggestions">
+                            <div class="context-content">Not yet generated</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sessionId = null;
+        let isProcessing = false;
+
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        async function startSession() {
+            if (isProcessing) return;
+
+            const background = document.getElementById('background').value;
+            const query = document.getElementById('initialQuery').value;
+
+            if (!query.trim()) {
+                alert('Please enter a research query');
+                return;
+            }
+
+            isProcessing = true;
+            const btn = document.getElementById('startBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+            try {
+                const sessionRes = await fetch('/api/session', { method: 'POST' });
+                const sessionData = await sessionRes.json();
+                sessionId = sessionData.session_id;
+
+                const queryRes = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        query: query,
+                        background: background
+                    })
+                });
+
+                const result = await queryRes.json();
+
+                if (result.error) {
+                    alert('Error: ' + result.error);
+                    return;
+                }
+
+                if (result.needs_more_info) {
+                    const missing = result.missing_info || [];
+                    const details = missing.length ? `\n- ${missing.join('\n- ')}` : '';
+                    alert('I need a bit more detail before building the research context.' + details);
+                    return;
+                }
+
+                if (!result.ready_for_queries) {
+                    alert('The research context was not fully prepared. Please try again.');
+                    return;
+                }
+
+                document.getElementById('setupForm').classList.add('hidden');
+                document.getElementById('chatInterface').classList.remove('hidden');
+
+                updateContextPanels(result);
+                addMessage(
+                    'assistant',
+                    'Welcome! I analyzed your research interests, selected source pages, and extracted evidence for the field context. Ask follow-up questions about directions, topics, or how your background fits.'
+                );
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to start session. Please try again.');
+            } finally {
+                isProcessing = false;
+                btn.disabled = false;
+                btn.innerHTML = 'Explore Research Directions';
+            }
+        }
+
+        async function sendMessage() {
+            if (isProcessing || !sessionId) return;
+
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            isProcessing = true;
+            const btn = document.getElementById('sendBtn');
+            btn.disabled = true;
+
+            addMessage('user', message);
+            input.value = '';
+
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        message: message
+                    })
+                });
+
+                const data = await res.json();
+                addMessage('assistant', data.error || data.response || 'Sorry, I encountered an error.');
+                await refreshContext();
+
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('assistant', 'Sorry, I encountered an error. Please try again.');
+            } finally {
+                isProcessing = false;
+                btn.disabled = false;
+            }
+        }
+
+        async function refreshContext() {
+            if (!sessionId) return;
+
+            try {
+                const res = await fetch(`/api/context/${sessionId}`);
+                const data = await res.json();
+                updateContextPanels({
+                    field_context: data.field_context,
+                    user_context: data.user_context
+                });
+            } catch (error) {
+                console.error('Error refreshing context:', error);
+            }
+        }
+
+        function updateContextPanels(result) {
+            if (result.field_context) {
+                const fc = result.field_context;
+
+                document.getElementById('fieldStatus').classList.add('active');
+                document.getElementById('fieldStatus').classList.remove('inactive');
+                document.getElementById('statusIndicator').classList.add('active');
+                document.getElementById('statusIndicator').classList.remove('inactive');
+
+                if (fc.major_areas && fc.major_areas.length > 0) {
+                    document.getElementById('majorAreas').innerHTML = fc.major_areas
+                        .map((area) => `&bull; ${escapeHtml(area)}`)
+                        .join('<br>');
+                }
+
+                if (fc.debate_criticisms && fc.debate_criticisms.length > 0) {
+                    document.getElementById('debates').innerHTML = fc.debate_criticisms
+                        .map((debate) => `&bull; ${escapeHtml(debate)}`)
+                        .join('<br>');
+                }
+
+                if (fc.sources && fc.sources.length > 0) {
+                    document.getElementById('sourcesList').innerHTML = fc.sources
+                        .map((source) => {
+                            const url = escapeHtml(source.url || '#');
+                            const title = escapeHtml(source.title || source.url || 'Source');
+                            const status = escapeHtml(source.status || 'UNKNOWN');
+                            const error = source.error ? ` (${escapeHtml(source.error)})` : '';
+                            return `<div><a href="${url}" target="_blank" rel="noopener noreferrer">${title}</a> [${status}]${error}</div>`;
+                        })
+                        .join('');
+                }
+            }
+
+            if (result.user_context) {
+                const uc = result.user_context;
+
+                document.getElementById('userStatus').classList.add('active');
+                document.getElementById('userStatus').classList.remove('inactive');
+
+                if (uc.current_focus) {
+                    document.getElementById('currentFocus').textContent = uc.current_focus;
+                }
+
+                if (uc.suggested_directions && uc.suggested_directions.length > 0) {
+                    const suggestionsHtml = uc.suggested_directions.map((suggestion) => `
+                        <div class="suggestion-item">
+                            <div>${escapeHtml(suggestion)}</div>
+                            <div class="feedback-buttons">
+                                <button class="btn-like" onclick='sendFeedback(${JSON.stringify(suggestion)}, true)'>This is interesting</button>
+                                <button class="btn-dislike" onclick='sendFeedback(${JSON.stringify(suggestion)}, false)'>Not for me</button>
+                            </div>
+                        </div>
+                    `).join('');
+                    document.getElementById('suggestions').innerHTML = suggestionsHtml;
+                }
+            }
+        }
+
+        async function sendFeedback(direction, isPositive) {
+            if (!sessionId) return;
+
+            try {
+                await fetch('/api/feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        feedback: direction,
+                        is_positive: isPositive
+                    })
+                });
+
+                await refreshContext();
+
+            } catch (error) {
+                console.error('Error sending feedback:', error);
+            }
+        }
+
+        function addMessage(role, content) {
+            const container = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = `message ${role}`;
+            div.innerHTML = `
+                <div class="role">${role === 'user' ? 'You' : 'Research Guide'}</div>
+                <div class="content">${escapeHtml(content).replace(/\n/g, '<br>')}</div>
+            `;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        document.getElementById('userInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
